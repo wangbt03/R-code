@@ -1,1 +1,20 @@
+# 示例数据
+data <- list(
+  Group1 = rnorm(50, mean = 10, sd = 5),
+  Group2 = rnorm(50, mean = 20, sd = 5),
+  Group3 = rnorm(50, mean = 15, sd = 5)
+)
+
+# 绘制箱线图
+boxplot(data,
+        main = "Boxplot Example",        # 标题
+        xlab = "Groups",                 # x轴标签
+        ylab = "Values",                 # y轴标签
+        col = c("lightblue", "pink", "lightgreen"),  # 颜色设置
+        border = "darkblue",             # 边框颜色
+        notch = TRUE                     # 是否显示缺口
+)
+
+# 添加网格线
+grid(nx = NULL, ny = NULL, col = "gray", lty = "dotted")
 
