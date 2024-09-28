@@ -1,20 +1,24 @@
-# 示例数据
-data <- list(
-  Group1 = rnorm(50, mean = 10, sd = 5),
-  Group2 = rnorm(50, mean = 20, sd = 5),
-  Group3 = rnorm(50, mean = 15, sd = 5)
+# 设置字体为 Times New Roman
+par(family = "Times New Roman")
+
+# 绘制箱图
+boxplot(glucose,
+        main = "Glucose",                            # 标题
+        xlab = " ",                                   # x轴标签
+        ylab = "Relative quantitative value",        # 纵轴标题
+        col = c( "#01a068","#0061d0"),              # 指定颜色
+        border = "black",                            # 箱体边框颜色
+        notch = FALSE,                               # 关闭缺口
+        outline = FALSE,                             # 不显示离群值
+        ylim = c(0, 5),                             # 设置 y 轴范围，从 0 开始
+        cex.axis = 1.5,                             # 加粗x轴刻度
+        cex.lab = 1.5,                              # 加粗坐标轴标签
+        cex.main = 1.5,                             # 加粗标题
+        lwd = 2                                     # 加粗箱体线条
 )
 
-# 绘制箱线图
-boxplot(data,
-        main = "Boxplot Example",        # 标题
-        xlab = "Groups",                 # x轴标签
-        ylab = "Values",                 # y轴标签
-        col = c("lightblue", "pink", "lightgreen"),  # 颜色设置
-        border = "darkblue",             # 边框颜色
-        notch = TRUE                     # 是否显示缺口
-)
-
-# 添加网格线
-grid(nx = NULL, ny = NULL, col = "gray", lty = "dotted")
-
+# 添加数据点
+points(jitter(rep(1:ncol(glucose), each = nrow(glucose)), amount = 0.1),  # 防止数据点重叠
+       as.vector(as.matrix(glucose)), 
+       pch = 19,                                       # 数据点形状
+       col = "black")                                  # 数据点颜色
