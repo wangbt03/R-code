@@ -1,12 +1,9 @@
-# 设置字体为 Times New Roman
-par(family = "Times New Roman")
-
 # 绘制箱图
 boxplot(glucose,
         main = "Glucose",                            # 标题
         xlab = " ",                                   # x轴标签
         ylab = "Relative quantitative value",        # 纵轴标题
-        col = c( "#01a068","#0061d0"),              # 指定颜色
+        col = c("#01a068","#0061d0"),                # 指定颜色
         border = "black",                            # 箱体边框颜色
         notch = FALSE,                               # 关闭缺口
         outline = FALSE,                             # 不显示离群值
@@ -35,11 +32,23 @@ cat("Hypoxia Shapiro-Wilk test p-value:", shapiro_test_hypoxia$p.value, "\n")
 if (shapiro_test_normoxia$p.value > 0.05 && shapiro_test_hypoxia$p.value > 0.05) {
     # 如果两组都符合正态分布，进行 T 检验
     t_test_result <- t.test(glucose$Normoxia, glucose$Hypoxia)
+    p_value <- t_test_result$p.value
+    test_type <- "T-test"
     cat("T-test result:\n")
     print(t_test_result)
 } else {
     # 如果有任一组不符合正态分布，进行 Mann-Whitney U 检验
     mann_whitney_result <- wilcox.test(glucose$Normoxia, glucose$Hypoxia)
+    p_value <- mann_whitney_result$p.value
+    test_type <- "Mann-Whitney U test"
     cat("Mann-Whitney U test result:\n")
     print(mann_whitney_result)
 }
+
+# 在图中添加p值标注，向上移动文本
+text(x = 1.5, y = 4.8, 
+     labels = bquote(italic("P") * " = " * .(round(p_value, 4))), 
+     cex = 1.5, font = 2)  # 加粗文本
+
+
+
