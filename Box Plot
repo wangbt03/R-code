@@ -22,3 +22,24 @@ points(jitter(rep(1:ncol(glucose), each = nrow(glucose)), amount = 0.1),  # 防�
        as.vector(as.matrix(glucose)), 
        pch = 19,                                       # 数据点形状
        col = "black")                                  # 数据点颜色
+
+# 1. 正态分布检验
+shapiro_test_normoxia <- shapiro.test(glucose$Normoxia)
+shapiro_test_hypoxia <- shapiro.test(glucose$Hypoxia)
+
+# 输出正态分布检验结果
+cat("Normoxia Shapiro-Wilk test p-value:", shapiro_test_normoxia$p.value, "\n")
+cat("Hypoxia Shapiro-Wilk test p-value:", shapiro_test_hypoxia$p.value, "\n")
+
+# 2. 根据 p 值判断是否符合正态分布
+if (shapiro_test_normoxia$p.value > 0.05 && shapiro_test_hypoxia$p.value > 0.05) {
+    # 如果两组都符合正态分布，进行 T 检验
+    t_test_result <- t.test(glucose$Normoxia, glucose$Hypoxia)
+    cat("T-test result:\n")
+    print(t_test_result)
+} else {
+    # 如果有任一组不符合正态分布，进行 Mann-Whitney U 检验
+    mann_whitney_result <- wilcox.test(glucose$Normoxia, glucose$Hypoxia)
+    cat("Mann-Whitney U test result:\n")
+    print(mann_whitney_result)
+}
