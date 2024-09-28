@@ -1,1 +1,1 @@
-
+glucose <- read_excel("D:/桌面/R/Glucose.xlsx")  #文件读取
