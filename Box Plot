@@ -1,54 +1,73 @@
-# 绘制箱图
-boxplot(glucose,
-        main = "Glucose",                            # 标题
-        xlab = " ",                                   # x轴标签
-        ylab = "Relative quantitative value",        # 纵轴标题
-        col = c("#01a068","#0061d0"),                # 指定颜色
-        border = "black",                            # 箱体边框颜色
-        notch = FALSE,                               # 关闭缺口
-        outline = FALSE,                             # 不显示离群值
-        ylim = c(0, 5),                             # 设置 y 轴范围，从 0 开始
-        cex.axis = 1.5,                             # 加粗x轴刻度
-        cex.lab = 1.5,                              # 加粗坐标轴标签
-        cex.main = 1.5,                             # 加粗标题
-        lwd = 2                                     # 加粗箱体线条
-)
+# 步骤 1：清空工作环境
+rm(list = ls())  # 删除所有对象
+gc()             # 进行垃圾回收
 
-# 添加数据点
-points(jitter(rep(1:ncol(glucose), each = nrow(glucose)), amount = 0.1),  # 防止数据点重叠
-       as.vector(as.matrix(glucose)), 
-       pch = 19,                                       # 数据点形状
-       col = "black")                                  # 数据点颜色
+# 步骤 2：加载所需的包
+library(readxl)  # 用于读取Excel文件
+library(ggplot2) # 用于绘图
 
-# 1. 正态分布检验
-shapiro_test_normoxia <- shapiro.test(glucose$Normoxia)
-shapiro_test_hypoxia <- shapiro.test(glucose$Hypoxia)
+# 步骤 3：读取Excel文件
+df <- read_excel("D:/桌面/R/qp-ferroptosis.xlsx")  # 修改为你文件的路径
 
-# 输出正态分布检验结果
-cat("Normoxia Shapiro-Wilk test p-value:", shapiro_test_normoxia$p.value, "\n")
-cat("Hypoxia Shapiro-Wilk test p-value:", shapiro_test_hypoxia$p.value, "\n")
+# 步骤 4：数据预处理
 
-# 2. 根据 p 值判断是否符合正态分布
-if (shapiro_test_normoxia$p.value > 0.05 && shapiro_test_hypoxia$p.value > 0.05) {
-    # 如果两组都符合正态分布，进行 T 检验
-    t_test_result <- t.test(glucose$Normoxia, glucose$Hypoxia)
-    p_value <- t_test_result$p.value
-    test_type <- "T-test"
-    cat("T-test result:\n")
-    print(t_test_result)
-} else {
-    # 如果有任一组不符合正态分布，进行 Mann-Whitney U 检验
-    mann_whitney_result <- wilcox.test(glucose$Normoxia, glucose$Hypoxia)
-    p_value <- mann_whitney_result$p.value
-    test_type <- "Mann-Whitney U test"
-    cat("Mann-Whitney U test result:\n")
-    print(mann_whitney_result)
-}
+# 处理缺失值，删除NA行
+df <- na.omit(df)
 
-# 在图中添加p值标注，向上移动文本
-text(x = 1.5, y = 4.8, 
-     labels = bquote(italic("P") * " = " * .(round(p_value, 4))), 
-     cex = 1.5, font = 2)  # 加粗文本
+# 确保 FoldChange 是数值型，并处理零或负值
+df$FoldChange <- as.numeric(df$FoldChange)
 
+# 对于上调基因，进行 log2 转换；对于下调基因，保留原始倍数
+df$log2_FoldChange <- ifelse(df$FoldChange > 1, log2(df$FoldChange), df$FoldChange)
 
+# 对log2_FoldChange做限制，避免极端值对颜色影响过大
+df$log2_FoldChange <- pmin(df$log2_FoldChange, 6)  # 将log2值大于6的限制为6
+df$log2_FoldChange <- pmax(df$log2_FoldChange, -6) # 将log2值小于-6的限制为-6
 
+# 创建一个新的组合变量，将时间和组结合，作为新的X轴变量
+df$TimeGroup <- paste(df$Time, df$Group, sep = "")
+
+# 修改TimeGroup的标签，使其显示为6h, 24h, 48h
+df$TimeGroup <- gsub("6Normoxia", "6h-Normoxia", df$TimeGroup)
+df$TimeGroup <- gsub("6Normoxia + Erastin", "6h-Normoxia + Erastin", df$TimeGroup)
+df$TimeGroup <- gsub("6Hypoxia", "6h-Hypoxia", df$TimeGroup)
+df$TimeGroup <- gsub("6Hypoxia + Erastin", "6h-Hypoxia + Erastin", df$TimeGroup)
+
+df$TimeGroup <- gsub("24Normoxia", "24h-Normoxia", df$TimeGroup)
+df$TimeGroup <- gsub("24Normoxia + Erastin", "24h-Normoxia + Erastin", df$TimeGroup)
+df$TimeGroup <- gsub("24Hypoxia", "24h-Hypoxia", df$TimeGroup)
+df$TimeGroup <- gsub("24Hypoxia + Erastin", "24h-Hypoxia + Erastin", df$TimeGroup)
+
+df$TimeGroup <- gsub("48Normoxia", "48h-Normoxia", df$TimeGroup)
+df$TimeGroup <- gsub("48Normoxia + Erastin", "48h-Normoxia + Erastin", df$TimeGroup)
+df$TimeGroup <- gsub("48Hypoxia", "48h-Hypoxia", df$TimeGroup)
+df$TimeGroup <- gsub("48Hypoxia + Erastin", "48h-Hypoxia + Erastin", df$TimeGroup)
+
+# 步骤 5：显式设置TimeGroup的顺序，确保6h、24h、48h的时间点在最前面
+df$TimeGroup <- factor(df$TimeGroup, 
+                       levels = c("6h-Normoxia", "6h-Normoxia + Erastin", "6h-Hypoxia", "6h-Hypoxia + Erastin", 
+                                  "24h-Normoxia", "24h-Normoxia + Erastin", "24h-Hypoxia", "24h-Hypoxia + Erastin", 
+                                  "48h-Normoxia", "48h-Normoxia + Erastin", "48h-Hypoxia", "48h-Hypoxia + Erastin"))
+
+# 步骤 6：创建气泡图
+ggplot(df, aes(x = TimeGroup, y = Gene, size = abs(FoldChange), color = log2_FoldChange)) +
+  geom_point(alpha = 0.8, stroke = 1.3) +  # 设置透明度和边框粗细
+  scale_color_gradient2(
+    low = "#0000B8",   # 蓝色表示下调
+    mid = "#B2BEB5",      # 中间值为灰色，表示没有变化
+    high = "#FFBF00",   # 橙色或红色表示上调
+    midpoint = 0,      # 中点为0，表示没有变化
+    limits = c(-6, 6)   # 限制颜色渐变范围，避免极端值影响
+  ) + 
+  scale_size_continuous(range = c(3, 13)) +  # 调整气泡大小范围，倍数越大，圆圈越大
+  theme_minimal() +
+  labs(color = "Log2 Fold Change",  # 颜色图例说明
+       size = "Fold Change Magnitude (log2 scale)") +  # 大小图例说明
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, face = "bold"),  # 旋转X轴标签并加粗
+        axis.text.y = element_text(face = "bold.italic", size = 12),         # 基因名称斜体并加粗
+        axis.title.x = element_blank(),  # 删除X轴标题
+        axis.title.y = element_blank()) +  # 删除Y轴标题
+  scale_x_discrete(
+    breaks = unique(df$TimeGroup),  # 使用时间组组合作为X轴
+    labels = unique(df$TimeGroup)   # 保持标签不变
+  )
