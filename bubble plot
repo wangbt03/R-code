@@ -1,1 +1,48 @@
+library(readxl) 
+library(ggplot2) 
 
+df <- read_excel("filename.xlsx")  
+df <- na.omit(df)
+df$FoldChange <- as.numeric(df$FoldChange)
+df$log2_FoldChange <- ifelse(df$FoldChange > 1, log2(df$FoldChange), df$FoldChange)
+df$log2_FoldChange <- pmin(df$log2_FoldChange, 6)  
+df$log2_FoldChange <- pmax(df$log2_FoldChange, -6)
+df$TimeGroup <- paste(df$Time, df$Group, sep = "")
+df$TimeGroup <- gsub("6Normoxia", "6h-Normoxia", df$TimeGroup)
+df$TimeGroup <- gsub("6Normoxia + Erastin", "6h-Normoxia + Erastin", df$TimeGroup)
+df$TimeGroup <- gsub("6Hypoxia", "6h-Hypoxia", df$TimeGroup)
+df$TimeGroup <- gsub("6Hypoxia + Erastin", "6h-Hypoxia + Erastin", df$TimeGroup)
+df$TimeGroup <- gsub("24Normoxia", "24h-Normoxia", df$TimeGroup)
+df$TimeGroup <- gsub("24Normoxia + Erastin", "24h-Normoxia + Erastin", df$TimeGroup)
+df$TimeGroup <- gsub("24Hypoxia", "24h-Hypoxia", df$TimeGroup)
+df$TimeGroup <- gsub("24Hypoxia + Erastin", "24h-Hypoxia + Erastin", df$TimeGroup)
+df$TimeGroup <- gsub("48Normoxia", "48h-Normoxia", df$TimeGroup)
+df$TimeGroup <- gsub("48Normoxia + Erastin", "48h-Normoxia + Erastin", df$TimeGroup)
+df$TimeGroup <- gsub("48Hypoxia", "48h-Hypoxia", df$TimeGroup)
+df$TimeGroup <- gsub("48Hypoxia + Erastin", "48h-Hypoxia + Erastin", df$TimeGroup)
+df$TimeGroup <- factor(df$TimeGroup, 
+                       levels = c("6h-Normoxia", "6h-Normoxia + Erastin", "6h-Hypoxia", "6h-Hypoxia + Erastin", 
+                                  "24h-Normoxia", "24h-Normoxia + Erastin", "24h-Hypoxia", "24h-Hypoxia + Erastin", 
+                                  "48h-Normoxia", "48h-Normoxia + Erastin", "48h-Hypoxia", "48h-Hypoxia + Erastin"))
+
+ggplot(df, aes(x = TimeGroup, y = Gene, size = abs(FoldChange), color = log2_FoldChange)) +
+  geom_point(alpha = 0.8, stroke = 1.3) + 
+  scale_color_gradient2(
+    low = "#0000B8",   
+    mid = "#B2BEB5",    
+    high = "#FFBF00",   
+    midpoint = 0,    
+    limits = c(-6, 6) 
+  ) + 
+  scale_size_continuous(range = c(3, 13)) +  
+  theme_minimal() +
+  labs(color = "Log2 Fold Change",  
+       size = "Fold Change Magnitude (log2 scale)") +  
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, face = "bold"),  
+        axis.text.y = element_text(face = "bold.italic", size = 12),    
+        axis.title.x = element_blank(),  
+        axis.title.y = element_blank()) +  
+  scale_x_discrete(
+    breaks = unique(df$TimeGroup), 
+    labels = unique(df$TimeGroup)  
+  )
