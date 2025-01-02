@@ -7,7 +7,7 @@ library(readxl)  # 用于读取Excel文件
 library(ggplot2) # 用于绘图
 
 # 步骤 3：读取Excel文件
-df <- read_excel("D:/桌面/R/qp-Hypoxia.xlsx")  # 修改为你文件的路径
+df <- read_excel("D:/桌面/R/qp-Hypoxia.xlsx")  # 修改为文件的路径
 
 # 步骤 4：数据预处理
 # 删除包含NA的行
