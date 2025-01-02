@@ -1,0 +1,62 @@
+# 步骤 1：清空工作环境
+rm(list = ls())  # 删除所有对象
+gc()             # 进行垃圾回收
+
+# 步骤 2：加载所需的包
+library(readxl)  # 用于读取Excel文件
+library(ggplot2) # 用于绘图
+
+# 步骤 3：读取Excel文件
+df <- read_excel("D:/桌面/R/qp-Hypoxia.xlsx")  # 修改为你文件的路径
+
+# 步骤 4：数据预处理
+# 删除包含NA的行
+df <- na.omit(df)
+
+# 确保 FoldChange 列是数值型
+df$FoldChange <- as.numeric(df$FoldChange)
+
+# 计算 log2(FoldChange)
+df$log2_FoldChange <- log2(df$FoldChange)
+
+# 确保时间顺序为 6, 24, 48，并按时间和实验组分组
+df$Time <- factor(df$Time, levels = c(6, 24, 48))  # 按时间顺序排序
+df$Group <- factor(df$Group, levels = c("Normoxia", "Hypoxia-2", "Hypoxia-1"))  # 分组排序
+
+# 创建一个新的 X 轴变量，按时间和组别顺序排序
+df$TimeGroup <- factor(paste0(df$Time, "h_", df$Group), 
+                       levels = c("6h_Normoxia", "6h_Hypoxia-2", "6h_Hypoxia-1",
+                                  "24h_Normoxia", "24h_Hypoxia-2", "24h_Hypoxia-1",
+                                  "48h_Normoxia", "48h_Hypoxia-2", "48h_Hypoxia-1"))
+
+# 检查 log2(FoldChange) 数据分布
+summary(df$log2_FoldChange)
+hist(df$log2_FoldChange, breaks = 20, col = "lightblue", main = "Distribution of log2(FoldChange)")
+
+# 步骤 5：创建气泡图
+ggplot(df, aes(x = TimeGroup,  # 使用时间和组别组合作为 X 轴
+               y = Gene, 
+               size = abs(log2_FoldChange),  # 气泡大小使用 log2(FoldChange) 的绝对值
+               color = log2_FoldChange)) +  # 气泡颜色使用 log2(FoldChange)
+  geom_point(alpha = 0.8, stroke = 1.3) +  # 设置透明度和边框粗细
+  scale_color_gradient2(
+    low = "#00aaff",   # 蓝色表示下调 (log2(FoldChange) < 0)
+    mid = "#bfa5a3",   # 灰色表示无变化 (log2(FoldChange) = 0)
+    high = "#bf2636",  # 红色表示上调 (log2(FoldChange) > 0)
+    midpoint = 0,      # 中点为 0，表示无变化
+    limits = c(-6, 6)  # 手动设置范围，上调最大值为 6，下调最小值为 -6
+  ) + 
+  scale_size_continuous(range = c(5, 19)) +  # 调整气泡大小范围
+  theme_minimal() +
+  labs(
+    x = "Time and Experimental Group",    # X轴标题
+    y = "Gene",                           # Y轴标题
+    color = "Log2 Fold Change",           # 颜色图例说明
+    size = "Log2 Fold Change Magnitude"   # 大小图例说明
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, face = "bold", size = 10), # 旋转X轴标签
+    axis.text.y = element_text(face = "bold.italic", size = 12),                 # 基因名称斜体并加粗
+    legend.title = element_text(size = 12, face = "bold")                       # 图例标题加粗
+  )
+
